@@ -130,6 +130,14 @@ function! s:show_message(stay_in_message_list)
   redraw
 endfunction
 
+function! s:show_large_message()
+  call <SID>show_message(0)
+  wincmd o
+  3split
+  execute 'b'. s:listbufnr
+  wincmd p
+endfunction
+
 " from message window
 function! s:show_next_message()
   let fullscreen = (bufwinnr(s:listbufnr) == -1) " we're in full screen message mode
@@ -960,6 +968,11 @@ func! s:message_list_window_mappings()
     nmap <buffer> <LeftMouse> <Plug>VmailOpenMessage
   endif
   nnoremap <buffer> <unique> <script> <Plug>VmailOpenMessage :call <SID>show_message(0)<CR>
+
+  if !hasmapto('<Plug>VmailOpenLargeMessage')
+    nmap <buffer> <leader>l <Plug>VmailOpenLargeMessage
+  endif
+  nnoremap <buffer> <unique> <script> <Plug>VmailOpenLargeMessage :call <SID>show_large_message()<CR>
 
   if !hasmapto('<Plug>VmailPreviewMessage')
     nmap <buffer> l <Plug>VmailPreviewMessage
