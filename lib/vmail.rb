@@ -88,19 +88,31 @@ module Vmail
     vimopts = config['vim_opts']
     $drb_uri = drb_uri
     server_name = "VMAIL:#{ config['username'] }"
-    vim_command = "DRB_URI=#{drb_uri} VMAIL_CONTACTS_FILE=#{contacts_file} VMAIL_MAILBOX=#{String.shellescape(mailbox)} VMAIL_QUERY=\"#{query_string}\" #{vim} --servername #{ server_name } -S #{vimscript} -c '#{vimopts}' #{buffer_file}"
-    STDERR.puts vim_command
+    #vim_command = "DRB_URI=#{drb_uri} VMAIL_CONTACTS_FILE=#{contacts_file} VMAIL_MAILBOX=#{String.shellescape(mailbox)} VMAIL_QUERY=\"#{query_string}\" #{vim} --servername #{ server_name } -S #{vimscript} -c '#{vimopts}' #{buffer_file}"
+    File.open("#{ENV['HOME']}/.vmail/start_vim.vbs", "w") do |file|
+        file.write("Dim sh, env\n")
+        file.write("Set sh = CreateObject(\"WScript.Shell\")\n")
+        file.write("Set env = sh.Environment(\"PROCESS\")\n")
+        {"DRB_URI" => drb_uri,
+         "VMAIL_CONTACTS_FILE" => contacts_file,
+         "VMAIL_MAILBOX" => String.shellescape(mailbox),
+         "VMAIL_QUERY" => "\"\"#{query_string}\"\""}.each { |k,v| file.write "env.Item(\"#{k}\") = \"#{v}\"\n" }
+        puts file.write("sh.Run(\"#{vim} --servername #{ server_name } -S #{vimscript} -c '#{vimopts}' #{buffer_file}\")\n")
+    end
+   # vim_command
+
     STDERR.puts "Using buffer file: #{buffer_file}"
+
     File.open(buffer_file, "w") do |file|
       file.puts "\n\nVmail #{Vmail::VERSION}\n\n"
       file.puts "Please wait while I fetch your messages.\n\n\n"
     end
 
-    system({"DRB_URI" => drb_uri,
-            "VMAIL_CONTACTS_FILE" => contacts_file,
-            "VMAIL_MAILBOX" => String.shellescape(mailbox),
-            "VMAIL_QUERY" => "\"#{query_string}\""},
-            "#{vim} --servername #{ server_name } -S #{vimscript} -c '#{vimopts}' #{buffer_file}")
+    #system({"DRB_URI" => drb_uri,
+            #"VMAIL_CONTACTS_FILE" => contacts_file,
+            #"VMAIL_MAILBOX" => String.shellescape(mailbox),
+            #"VMAIL_QUERY" => "\"#{query_string}\""},
+            #"#{vim} --servername #{ server_name } -S #{vimscript} -c '#{vimopts}' #{buffer_file}")
 
     if vim == 'mvim' || vim == 'gvim'
       DRb.thread.join
